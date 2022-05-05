@@ -36,14 +36,48 @@ jobs:
         
       - name: Check outputs
         run: echo ${{ steps.vars.outputs.sha_short }}
+
+      ############# MODEL ###############
+
+      - uses: docker-practice/actions-setup-docker@master
+      - run: |
+          set -x
+          docker version
+          container_id=$(docker create soootaleb/hetic-data:0cfc9d2)
+          docker cp "$container_id:/data/input.data.json" .
+          docker cp "$container_id:/data/output.data.json" .
+          echo "Extracting dataset version 0cfc9d2"
+          pwd
+          ls -l .
+
+      ############ PYTHON #############
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install scikit-learn
+      
+      - name: execute py script # run file
+        run: |
+          ls -l .
+          python train.py
+          echo "Trained model ${{ steps.vars.outputs.sha_short }} with data 0cfc9d2"
+          ls -l .
+
+      ########### DOCKER ##################
       
       - name: Build image and push to Docker Hub and GitHub Container Registry
         uses: docker/build-push-action@v2
         with:
           # relative path to the place where source code with Dockerfile is located
           context: .
+          file: Model.dockerfile
           # Note: tags has to be all lower-case
-          tags: heticdocker/hetic-data:${{ steps.vars.outputs.sha_short }}
+          tags: heticdocker/hetic-model:${{ steps.vars.outputs.sha_short }}
           # build on feature branches, push only on main branch
           push: true # ${{ github.ref == 'refs/heads/main' }}
 
