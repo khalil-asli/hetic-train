@@ -83,6 +83,7 @@ jobs:
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
+        
       - name: Trigger API
         run: |
           curl -H "Authorization: token ${{ secrets.WF_TOKEN }}" \
