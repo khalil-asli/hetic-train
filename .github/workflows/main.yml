@@ -5,7 +5,7 @@ on:
   push:
     branches: [main, cicd]
   # run it during pull request
-  pull_request:
+  repository_dispatch:
 
 jobs:
   # define job to build and publish docker image
@@ -38,6 +38,7 @@ jobs:
         run: echo ${{ steps.vars.outputs.sha_short }}
 
       ############# MODEL ###############
+
       - uses: docker-practice/actions-setup-docker@master
       - run: |
           set -x
@@ -49,7 +50,6 @@ jobs:
           echo "Extracting dataset version $dataset_commit_id"
           pwd
           ls -l .
-
       ############ PYTHON #############
       - name: setup python
         uses: actions/setup-python@v2
@@ -67,8 +67,6 @@ jobs:
           python train.py
           echo "Trained model ${{ steps.vars.outputs.sha_short }} with data $dataset_commit_id"
           ls -l .
-          
-
       ########### DOCKER ##################
       
       - name: Build image and push to Docker Hub and GitHub Container Registry
@@ -84,7 +82,7 @@ jobs:
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
-        
+
       - name: Trigger API
         run: |
           curl -H "Authorization: token ${{ secrets.WF_TOKEN }}" \
